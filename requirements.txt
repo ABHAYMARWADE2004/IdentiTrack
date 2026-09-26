@@ -1,0 +1,6 @@
+opencv-python
+ultralytics
+dlib-bin
+face_recognition
+mysql-connector-python
+streamlit
