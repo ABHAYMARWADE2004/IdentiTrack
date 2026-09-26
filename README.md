@@ -1,89 +1,165 @@
-# 🎯 IdentiTrack — AI-Based Person Re-Identification & Tracking System
+# 🎯 IdentiTrack
 
-IdentiTrack is a Real-Time Person Re-Identification System That Enrolls Individuals From a Photo Gallery And Automatically Recognizes Them Via Live Webcam Feed Or Uploaded Video, Logging Every Detection To a Database With a Live Analytics Dashboard.
+### AI-Powered Person Re-Identification & Real-Time Tracking System
+
+[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
+[![OpenCV](https://img.shields.io/badge/OpenCV-Computer%20Vision-green.svg)](https://opencv.org/)
+[![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-purple.svg)](https://ultralytics.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red.svg)](https://streamlit.io/)
+[![MySQL](https://img.shields.io/badge/MySQL-Database-orange.svg)](https://www.mysql.com/)
+
+IdentiTrack Is an End-To-End Computer Vision System That Enrolls Individuals From Reference Photos And Automatically Detects And Identifies Them in Real Time — Via Live Webcam or Uploaded Video — While Logging Every Detection To a Database and surfacing Insights Through An Interactive Analytics Dashboard.
+
+Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data Analytics — Combining a Two-stage AI Detection Pipeline With a Full data Logging And Visualization Layer.
+
+---
+
+## 🔑 Highlights
+
+- **Two-stage detection pipeline** — YOLOv8 for Person Detection + Face Recognition for Identity Matching, So Presence Is Detected Even When a Face isn't Visible
+- **Dual input modes** — Real-Time webcam tracking *and* Uploaded video File Processing
+- **Full data pipeline** — From Raw Video Frames → Structured MySQL Records → Interactive Analytics Dashboard
+- **Production-conscious design** — Cooldown-Based Deduplication, Secure Credential handling via `.env`, And a clean Modular Codebase
+
+---
 
 ## 🚀 Features
 
-- **Face Enrollment** — Register People Using Reference Photos Stored In a Gallery Folder
-- **Two-Stage Detection Pipeline** — YOLOv8 Detects The Presence of a Person in Each Frame, Then Face Recognition Identifies Who It Is — So a Person is Still Flagged as detected Even When Their Face Isn't Visible (Turned away, Partial angle)
-- **Real-Time Face Recognition** — Detects and identifies enrolled individuals via webcam using deep learning face embeddings
-- **Video File Processing** — Upload a recorded video and run the full detection pipeline on it, with a browser-playable, downloadable output video
-- **Smart Deduplication** — Cooldown-based logic prevents redundant database entries for continuously visible individuals
-- **MySQL Database Integration** — Every detection is logged with person name and timestamp
-- **Live Analytics Dashboard** — Built with Streamlit, showing total detections, unique people, peak activity hours, and detection trends
-- **Filtering & Export** — Filter records by person and date, and export results as CSV
-- **Data Management** — Clear all detection records from the dashboard for a fresh start
-- **Secure Configuration** — Database credentials stored in a `.env` file, excluded from version control
+| Feature | Description |
+|---|---|
+| 👤 **Face Enrollment** | Register individuals from reference photos organized by name |
+| 🎯 **Two-Stage Detection** | YOLOv8 detects *presence*, face recognition confirms *identity* |
+| 📹 **Live Webcam Tracking** | Real-time detection and recognition with on-screen bounding boxes |
+| 🎬 **Video File Processing** | Upload any video and run the full detection pipeline on it |
+| 🗄️ **Database Logging** | Every detection logged to MySQL with cooldown-based deduplication |
+| 📊 **Analytics Dashboard** | Peak-hour trends, per-person counts, date-wise activity, CSV export |
+| 🔍 **Filtering** | Filter detection records by person and by date |
+| 🔒 **Secure Config** | Credentials managed via `.env`, excluded from version control |
+
+---
 
 ## 🛠️ Tech Stack
 
-| Component | Technology |
+| Layer | Technology |
 |---|---|
 | Language | Python 3.10 |
 | Person Detection | YOLOv8 (Ultralytics) |
-| Face Recognition | `face_recognition` (dlib-based) |
+| Face Recognition | `face_recognition` (dlib-based, 128-d facial embeddings) |
 | Video Processing | OpenCV, imageio (H.264 encoding) |
 | Database | MySQL |
 | Dashboard | Streamlit |
-| Data Handling | Pandas |
+| Data Analysis | Pandas |
 | Configuration | python-dotenv |
+
+---
+
+## 🧠 How It Works
+
+┌──────────────┐ ┌──────────────────┐ ┌────────────────────┐
+│ Gallery │ --> │ Enrollment │ --> │ Face Encodings │
+│ Photos │ │ (enrollment.py) │ │ (encodings.pkl) │
+└──────────────┘ └──────────────────┘ └────────────────────┘
+│
+┌──────────────┐ ┌──────────────────┐ │
+│ Webcam / │ --> │ YOLOv8 Person │ <─────────────┘
+│ Video File │ │ Detection │
+└──────────────┘ └──────────────────┘
+│
+▼
+┌──────────────────┐
+│ Face Match │
+│ Against Encodings│
+└──────────────────┘
+│
+▼
+┌──────────────────┐ ┌────────────────────┐
+│ MySQL Logging │ --> │ Streamlit │
+│ (with cooldown) │ │ Analytics Dashboard│
+└──────────────────┘ └────────────────────┘
+
+
+1. **Enrollment**: Reference photos in `gallery/<PersonName>/` are converted into 128-dimension facial embeddings via `enrollment.py` and stored in `encodings.pkl`.
+2. **Detection**: Each frame (from webcam or video) is passed through YOLOv8, which locates every person present — regardless of whether their face is visible.
+3. **Recognition**: The cropped region for each detected person is checked for a face; if found, it's matched against stored encodings using distance-based comparison.
+4. **Logging**: Matched detections are inserted into MySQL, with cooldown logic preventing duplicate entries for a continuously visible person.
+5. **Visualization**: The Streamlit dashboard reads live from the database to surface detection counts, peak activity hours, trends, and exportable records.
+
+---
 
 ## 📁 Project Structure
 
 IdentiTrack/
-├── gallery/ # Reference photos for enrollment, organized by person name
+├── gallery/ # Reference photos for Enrollment, Organized by person name
 │ └── PersonName/
 │ ├── photo1.jpg
 │ └── photo2.jpg
 ├── config.py # Central Configuration (loads secrets from .env)
 ├── enrollment.py # Extracts face encodings from gallery photos
-├── tracker.py # Real-time Webcam-based detection and recognition
-├── video_processor.py # Processes Uploaded Video Files
-├── database.py # MySQL Connection, logging, and Record Management
-├── dashboard.py # Streamlit dashboard — analytics, filters, video upload
-├── requirements.txt # Python dependencies
-├── .env # Database Credentials (not committed to version control)
-├── .gitignore # Excludes venv, .env, And Generated Files
+├── tracker.py # Real-time webcam-based detection and recognition
+├── video_processor.py # Processes uploaded video files
+├── database.py # MySQL connection, logging, and record management
+├── dashboard.py # Streamlit dashboard — Analytics, Filters, video upload
+├── requirements.txt # Python Dependencies
 └── README.md
 
 
-## ⚙️ How It Works
+---
 
-1. **Enrollment**: Photos placed in `gallery/<PersonName>/` Are Processed by `enrollment.py`, which extracts a unique facial embedding (128-dimension vector) for each photo and stores it in `encodings.pkl`.
-2. **Person Detection**: `tracker.py` (live) or `video_processor.py` (uploaded video) runs each frame through YOLOv8, which detects all people present, regardless of whether their face is visible.
-3. **Face Matching**: For each detected person, the cropped region is Checked for a face; if found, it's compared against the stored encodings Using distance-based matching to Identify who it is.
-4. **Logging**: When a known face is matched, `database.py` inserts a Record into MySQL — with cooldown logic to avoid duplicate entries within a short time window.
-5. **Visualization**: `dashboard.py` reads from the database and Presents detection statistics, filterable records, time-based Analytics, and an interface to Upload and Process video files.
+## ⚙️ Getting Started
 
-## 🔧 Setup Instructions
+```bash
+# 1. Navigate into the project folder
+cd IdentiTrack
 
-1. Navigate into the project folder
-2. Create a virtual environment: `python -m venv venv`
-3. Activate it: `venv\Scripts\activate` (Windows)
-4. Install dependencies: `pip install -r requirements.txt`
-5. Set up a MySQL database and create a `.env` file with:
-DB_PASSWORD=your_mysql_password
-6. Create the `detections` table:
-```sql
-   CREATE TABLE detections (
-       id INT AUTO_INCREMENT PRIMARY KEY,
-       person_name VARCHAR(100),
-       detected_at DATETIME DEFAULT CURRENT_TIMESTAMP
-   );
+# 2. Create and activate a virtual environment
+python -m venv venv
+venv\Scripts\activate        # Windows
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Configure your database credentials
+# Create a .env file in the root folder:
+echo DB_PASSWORD=your_mysql_password > .env
+
+# 5. Create the MySQL database and table
 ```
-7. Add reference photos to `gallery/<PersonName>/`
-8. Run enrollment: `python enrollment.py`
-9. Start live tracking: `python tracker.py`
-10. Launch dashboard: `streamlit run dashboard.py`
+```sql
+CREATE DATABASE identitrack_db;
+USE identitrack_db;
+
+CREATE TABLE detections (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    person_name VARCHAR(100),
+    detected_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+```bash
+# 6. Add reference photos to gallery/<PersonName>/, then enroll
+python enrollment.py
+
+# 7. Run live tracking
+python tracker.py
+
+# 8. Launch the analytics dashboard
+streamlit run dashboard.py
+```
+
+---
 
 ## 📊 Future Scope
 
-- Multi-Camera Support
-- Alert/Notification System For Specific Individuals
-- Deployment Via Docker For Production Use
-- Advanced ID-switch Handling for Crowded/Occluded Scenes Using Segmentation-Based Detection
-- Automated Scheduled Reports (Daily/Weekly Summaries)
+- Multi-Camera Support for Simultaneous Feeds.
+- Real-Time Alerting for Specific Individuals.
+- Docker-based Deployment For Production Environments.
+- Segmentation-Based Detection For Improved Accuracy in Crowded Scenes.
+- Scheduled Automated Reporting (Daily/Weekly summaries).
 
-## 👤 Author
+---
 
-Built by Abhay as a Learning Project in computer vision and real-time data pipelines — applying data Analysis and Data science Thinking to Unstructured Data Sources Like Video and Images.
+## 👨‍💻 Author
+
+**Abhay Marwade**
+Aspiring Data Analyst | Data Science & AI Enthusiast
+
+🔗 GitHub: [ABHAYMARWADE2004](https://github.com/ABHAYMARWADE2004)
