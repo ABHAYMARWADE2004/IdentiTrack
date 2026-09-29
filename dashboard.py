@@ -1,6 +1,5 @@
 # dashboard.py
-# Ye Streamlit dashboard hai jo database ke saare detection records
-# ek web page pe achhe se dikhata hai, saath me analytics, filters, export bhi
+# IdentiTrack ka main dashboard - analytics, filters, video upload, sab kuch yahin hai
 
 import streamlit as st
 import pandas as pd
@@ -8,8 +7,32 @@ from database import get_all_detections, clear_all_detections
 
 st.set_page_config(page_title="IdentiTrack Dashboard", page_icon="🎯", layout="wide")
 
-st.title("🎯 IdentiTrack — Person Detection Dashboard")
-st.write("Real-time person re-identification tracking results")
+# ===== Custom Styling (Dashboard ko professional look dene ke liye) =====
+st.markdown("""
+<style>
+    [data-testid="stMetric"] {
+        background-color: #1A1D29;
+        border: 1px solid #2D3142;
+        padding: 15px;
+        border-radius: 10px;
+    }
+    h2, h3 {
+        color: #FF4B8B;
+    }
+    .stButton>button {
+        border-radius: 8px;
+        border: 1px solid #FF4B8B;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ===== Title Section =====
+st.markdown("""
+<div style="text-align: center; padding: 10px 0 30px 0;">
+    <h1 style="font-size: 42px; margin-bottom: 0;">🎯 IdentiTrack</h1>
+    <p style="font-size: 16px; color: #999;">AI-Powered Person Re-Identification & Real-Time Analytics</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ===== Sidebar: Clear Records Option =====
 with st.sidebar:
@@ -18,7 +41,7 @@ with st.sidebar:
     if st.button("🗑️ Clear All Records", type="secondary"):
         clear_all_detections()
         st.success("Saare records delete ho gaye!")
-        st.rerun()   # Page ko refresh karo taaki naya (khaali) data dikhe
+        st.rerun()
 
 records = get_all_detections()
 
@@ -30,6 +53,7 @@ else:
     df["Date"] = df["Detected At"].dt.date
     df["Hour"] = df["Detected At"].dt.hour
 
+    # ===== Top Stats =====
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
@@ -70,11 +94,11 @@ else:
     if selected_date != "Sabhi Dates":
         filtered_df = filtered_df[filtered_df["Date"].astype(str) == selected_date]
 
-    # ===== Table Dikhao =====
+    # ===== Table =====
     st.subheader("📋 Detection Records")
     st.dataframe(filtered_df[["Name", "Detected At"]], use_container_width=True)
 
-    # ===== CSV Download Button =====
+    # ===== CSV Download =====
     csv_data = filtered_df[["Name", "Detected At"]].to_csv(index=False)
     st.download_button(
         label="📥 Download as CSV",
@@ -106,6 +130,35 @@ else:
     daily_data["Date"] = daily_data["Date"].astype(str)
     daily_data = daily_data.set_index("Date")
     st.bar_chart(daily_data)
+
+    # ===== Duration & Visit Tracking =====
+    st.divider()
+    st.subheader("⏱️ Duration & Visit Analysis")
+    st.write("Har banda kitni baar 'visit' kiya, aur kitni der screen pe raha (session-based calculation)")
+
+    SESSION_GAP_MINUTES = 2
+
+    df_sorted = df.sort_values(["Name", "Detected At"]).copy()
+    df_sorted["Time Gap"] = df_sorted.groupby("Name")["Detected At"].diff().dt.total_seconds()
+    df_sorted["New Session"] = (df_sorted["Time Gap"].isna()) | (df_sorted["Time Gap"] > SESSION_GAP_MINUTES * 60)
+    df_sorted["Session ID"] = df_sorted.groupby("Name")["New Session"].cumsum()
+
+    sessions = df_sorted.groupby(["Name", "Session ID"]).agg(
+        Start=("Detected At", "min"),
+        End=("Detected At", "max")
+    ).reset_index()
+
+    sessions["Duration (sec)"] = (sessions["End"] - sessions["Start"]).dt.total_seconds()
+
+    summary = sessions.groupby("Name").agg(
+        Total_Visits=("Session ID", "count"),
+        Total_Duration_Sec=("Duration (sec)", "sum")
+    ).reset_index()
+
+    summary["Total Duration (min)"] = (summary["Total_Duration_Sec"] / 60).round(2)
+    summary = summary.rename(columns={"Name": "Person", "Total_Visits": "Total Visits"})
+
+    st.dataframe(summary[["Person", "Total Visits", "Total Duration (min)"]], use_container_width=True)
 
     # ===== Video Upload Section =====
     st.divider()
