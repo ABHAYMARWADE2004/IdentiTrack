@@ -8,18 +8,18 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red.svg)](https://streamlit.io/)
 [![MySQL](https://img.shields.io/badge/MySQL-Database-orange.svg)](https://www.mysql.com/)
 
-IdentiTrack Is an End-To-End Computer Vision System That Enrolls Individuals From Reference Photos And Automatically Detects And Identifies Them in Real Time — Via Live Webcam or Uploaded Video — While Logging Every Detection To a Database and surfacing Insights Through An Interactive Analytics Dashboard.
+IdentiTrack Is an End-To-End Computer Vision System That Enrolls Individuals From Reference Photos And Automatically Detects And Identifies Them in Real Time — Via Live Webcam Or Uploaded Video — While Logging Every Detection To a Database And Surfacing Insights Through An Interactive Analytics Dashboard.
 
-Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data Analytics — Combining a Two-stage AI Detection Pipeline With a Full data Logging And Visualization Layer.
+Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data Analytics — Combining A Two-stage AI Detection Pipeline With a Full data Logging And Visualization Layer.
 
 ---
 
 ## 🔑 Highlights
 
-- **Two-stage detection pipeline** — YOLOv8 for Person Detection + Face Recognition for Identity Matching, So Presence Is Detected Even When a Face isn't Visible
-- **Dual input modes** — Real-Time webcam tracking *and* Uploaded video File Processing
-- **Full data pipeline** — From Raw Video Frames → Structured MySQL Records → Interactive Analytics Dashboard
-- **Production-conscious design** — Cooldown-Based Deduplication, Secure Credential handling via `.env`, And a clean Modular Codebase
+- **Two-Stage Detection Pipeline** — YOLOv8 For Person Detection + Face Recognition For Identity Matching, So Presence Is Detected Even When a Face isn't Visible
+- **Dual Input Modes** — Real-Time webcam tracking *and* Uploaded video File Processing
+- **Full Data Pipeline** — From Raw Video Frames → Structured MySQL Records → Interactive Analytics Dashboard
+- **Production-Conscious Design** — Cooldown-Based Deduplication, Secure Credential Handling Via `.env`, And a Clean Modular Codebase
 
 ---
 
@@ -27,14 +27,14 @@ Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data A
 
 | Feature | Description |
 |---|---|
-| 👤 **Face Enrollment** | Register individuals from reference photos organized by name |
-| 🎯 **Two-Stage Detection** | YOLOv8 detects *presence*, face recognition confirms *identity* |
-| 📹 **Live Webcam Tracking** | Real-time detection and recognition with on-screen bounding boxes |
-| 🎬 **Video File Processing** | Upload any video and run the full detection pipeline on it |
-| 🗄️ **Database Logging** | Every detection logged to MySQL with cooldown-based deduplication |
-| 📊 **Analytics Dashboard** | Peak-hour trends, per-person counts, date-wise activity, CSV export |
-| 🔍 **Filtering** | Filter detection records by person and by date |
-| 🔒 **Secure Config** | Credentials managed via `.env`, excluded from version control |
+| 👤 **Face Enrollment** | Register Individuals From Reference Photos Organized By Name |
+| 🎯 **Two-Stage Detection** | YOLOv8 Detects *presence*, face recognition confirms *identity* |
+| 📹 **Live Webcam Tracking** | Real-time detection And recognition with on-screen Bounding Boxes |
+| 🎬 **Video File Processing** | Upload any Video And Run The Full Detection Pipeline On It |
+| 🗄️ **Database Logging** | Every Detection Logged To MySQL with cooldown-based Deduplication |
+| 📊 **Analytics Dashboard** | Peak-Hour Trends, Per-person counts, Date-Wise Activity, CSV Export |
+| 🔍 **Filtering** | Filter Detection Records By Person And By Date |
+| 🔒 **Secure Config** | Credentials Managed Via `.env`, Excluded From Version Control |
 
 ---
 
@@ -78,30 +78,32 @@ Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data A
 └──────────────────┘ └────────────────────┘
 
 
-1. **Enrollment**: Reference photos in `gallery/<PersonName>/` are converted into 128-dimension facial embeddings via `enrollment.py` and stored in `encodings.pkl`.
-2. **Detection**: Each frame (from webcam or video) is passed through YOLOv8, which locates every person present — regardless of whether their face is visible.
-3. **Recognition**: The cropped region for each detected person is checked for a face; if found, it's matched against stored encodings using distance-based comparison.
-4. **Logging**: Matched detections are inserted into MySQL, with cooldown logic preventing duplicate entries for a continuously visible person.
-5. **Visualization**: The Streamlit dashboard reads live from the database to surface detection counts, peak activity hours, trends, and exportable records.
+1. **Enrollment**: Reference Photos in `gallery/<PersonName>/` Are Converted Into 128-Dimension Facial Embeddings Via `enrollment.py` And Stored In `encodings.pkl`.
+2. **Detection**: Each Frame (from webcam or video) is Passed Through YOLOv8, Which Locates Every Person Present — Regardless Of Whether Their Face Is Visible.
+3. **Recognition**: The Cropped Region For Each Detected Person Is Checked For a Face; If Found, It's Matched Against Stored Encodings Using Distance-Based Comparison.
+4. **Logging**: Matched Detections Are Inserted Into MySQL, With Cooldown Logic Preventing Duplicate Entries For a Continuously Visible Person.
+5. **Visualization**: The Streamlit Dashboard Reads Live From The Database To Surface Detection Counts, Peak Activity Hours, Trends And Exportable Records.
+
 
 ---
 
 ## 📁 Project Structure
 
+```
 IdentiTrack/
-├── gallery/ # Reference photos for Enrollment, Organized by person name
-│ └── PersonName/
-│ ├── photo1.jpg
-│ └── photo2.jpg
-├── config.py # Central Configuration (loads secrets from .env)
-├── enrollment.py # Extracts face encodings from gallery photos
-├── tracker.py # Real-time webcam-based detection and recognition
-├── video_processor.py # Processes uploaded video files
-├── database.py # MySQL connection, logging, and record management
-├── dashboard.py # Streamlit dashboard — Analytics, Filters, video upload
-├── requirements.txt # Python Dependencies
+├── gallery/                  # Reference photos for enrollment, organized by person name
+│   └── PersonName/
+│       ├── photo1.jpg
+│       └── photo2.jpg
+├── config.py                 # Central configuration (loads secrets from .env)
+├── enrollment.py              # Extracts face encodings from gallery photos
+├── tracker.py                  # Real-time webcam-based detection and recognition
+├── video_processor.py           # Processes uploaded video files
+├── database.py                   # MySQL connection, logging, and record management
+├── dashboard.py                   # Streamlit dashboard — analytics, filters, video upload
+├── requirements.txt                # Python dependencies
 └── README.md
-
+```
 
 ---
 
@@ -149,10 +151,10 @@ streamlit run dashboard.py
 
 ## 📊 Future Scope
 
-- Multi-Camera Support for Simultaneous Feeds.
+- Multi-Camera Support For Simultaneous Feeds.
 - Real-Time Alerting for Specific Individuals.
-- Docker-based Deployment For Production Environments.
-- Segmentation-Based Detection For Improved Accuracy in Crowded Scenes.
+- Docker-Based Deployment For Production Environments.
+- Segmentation-Based Detection For Improved Accuracy In Crowded Scenes.
 - Scheduled Automated Reporting (Daily/Weekly summaries).
 
 ---
