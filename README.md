@@ -10,7 +10,7 @@
 
 IdentiTrack Is an End-To-End Computer Vision System That Enrolls Individuals From Reference Photos And Automatically Detects And Identifies Them in Real Time — Via Live Webcam Or Uploaded Video — While Logging Every Detection To a Database And Surfacing Insights Through An Interactive Analytics Dashboard.
 
-Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data Analytics — Combining A Two-stage AI Detection Pipeline With a Full data Logging And Visualization Layer.
+Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data Analytics — Combining A Two-stage AI Detection Pipeline With a Full Data Logging And Visualization Layer.
 
 ---
 
@@ -28,10 +28,10 @@ Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data A
 | Feature | Description |
 |---|---|
 | 👤 **Face Enrollment** | Register Individuals From Reference Photos Organized By Name |
-| 🎯 **Two-Stage Detection** | YOLOv8 Detects *presence*, face recognition confirms *identity* |
-| 📹 **Live Webcam Tracking** | Real-time detection And recognition with on-screen Bounding Boxes |
+| 🎯 **Two-Stage Detection** | YOLOv8 Detects *presence*, face Recognition Confirms *identity* |
+| 📹 **Live Webcam Tracking** | Real-time Detection And recognition with on-screen Bounding Boxes |
 | 🎬 **Video File Processing** | Upload any Video And Run The Full Detection Pipeline On It |
-| 🗄️ **Database Logging** | Every Detection Logged To MySQL with cooldown-based Deduplication |
+| 🗄️ **Database Logging** | Every Detection Logged To MySQL With Cooldown-Based Deduplication |
 | 📊 **Analytics Dashboard** | Peak-Hour Trends, Per-person counts, Date-Wise Activity, CSV Export |
 | 🔍 **Filtering** | Filter Detection Records By Person And By Date |
 | 🔒 **Secure Config** | Credentials Managed Via `.env`, Excluded From Version Control |
@@ -162,6 +162,7 @@ streamlit run dashboard.py
 ## 👨‍💻 Author
 
 **Abhay Marwade**
+
 Aspiring Data Analyst | Data Science & AI Enthusiast
 
 🔗 GitHub: [ABHAYMARWADE2004](https://github.com/ABHAYMARWADE2004)
