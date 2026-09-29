@@ -1,5 +1,5 @@
 # dashboard.py
-# IdentiTrack ka main dashboard - analytics, filters, video upload, sab kuch yahin hai
+# Main Streamlit dashboard - analytics, filters, video upload, everything lives here
 
 import streamlit as st
 import pandas as pd
@@ -7,7 +7,7 @@ from database import get_all_detections, clear_all_detections
 
 st.set_page_config(page_title="IdentiTrack Dashboard", page_icon="🎯", layout="wide")
 
-# ===== Custom Styling (Dashboard ko professional look dene ke liye) =====
+# ===== Custom styling for a more polished look =====
 st.markdown("""
 <style>
     [data-testid="stMetric"] {
@@ -26,7 +26,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ===== Title Section =====
+# ===== Title section =====
 st.markdown("""
 <div style="text-align: center; padding: 10px 0 30px 0;">
     <h1 style="font-size: 42px; margin-bottom: 0;">🎯 IdentiTrack</h1>
@@ -34,26 +34,26 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== Sidebar: Clear Records Option =====
+# ===== Sidebar: clear records option =====
 with st.sidebar:
     st.header("⚙️ Settings")
-    st.write("Saare records delete karke fresh start karo")
+    st.write("Clear all records to start fresh")
     if st.button("🗑️ Clear All Records", type="secondary"):
         clear_all_detections()
-        st.success("Saare records delete ho gaye!")
+        st.success("All records deleted!")
         st.rerun()
 
 records = get_all_detections()
 
 if len(records) == 0:
-    st.warning("Abhi tak koi detection record nahi hai. Pehle tracker.py chalao.")
+    st.warning("No detection records yet. Run tracker.py first.")
 else:
     df = pd.DataFrame(records, columns=["Name", "Detected At"])
     df["Detected At"] = pd.to_datetime(df["Detected At"])
     df["Date"] = df["Detected At"].dt.date
     df["Hour"] = df["Detected At"].dt.hour
 
-    # ===== Top Stats =====
+    # ===== Top stats =====
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
@@ -73,32 +73,32 @@ else:
 
     st.divider()
 
-    # ===== Filters (Name + Date) =====
-    st.subheader("🔍 Filter Karo")
+    # ===== Filters (name + date) =====
+    st.subheader("🔍 Filters")
 
     filter_col1, filter_col2 = st.columns(2)
 
     with filter_col1:
-        all_names = ["Sabhi"] + list(df["Name"].unique())
-        selected_name = st.selectbox("Naam se filter karo:", all_names)
+        all_names = ["All"] + list(df["Name"].unique())
+        selected_name = st.selectbox("Filter by name:", all_names)
 
     with filter_col2:
-        all_dates = ["Sabhi Dates"] + sorted([str(d) for d in df["Date"].unique()], reverse=True)
-        selected_date = st.selectbox("Date se filter karo:", all_dates)
+        all_dates = ["All Dates"] + sorted([str(d) for d in df["Date"].unique()], reverse=True)
+        selected_date = st.selectbox("Filter by date:", all_dates)
 
     filtered_df = df.copy()
 
-    if selected_name != "Sabhi":
+    if selected_name != "All":
         filtered_df = filtered_df[filtered_df["Name"] == selected_name]
 
-    if selected_date != "Sabhi Dates":
+    if selected_date != "All Dates":
         filtered_df = filtered_df[filtered_df["Date"].astype(str) == selected_date]
 
     # ===== Table =====
     st.subheader("📋 Detection Records")
     st.dataframe(filtered_df[["Name", "Detected At"]], use_container_width=True)
 
-    # ===== CSV Download =====
+    # ===== CSV export =====
     csv_data = filtered_df[["Name", "Detected At"]].to_csv(index=False)
     st.download_button(
         label="📥 Download as CSV",
@@ -109,7 +109,7 @@ else:
 
     st.divider()
 
-    # ===== Analytics Section =====
+    # ===== Analytics section =====
     st.subheader("📊 Analytics")
 
     col_a, col_b = st.columns(2)
@@ -131,12 +131,12 @@ else:
     daily_data = daily_data.set_index("Date")
     st.bar_chart(daily_data)
 
-    # ===== Duration & Visit Tracking =====
+    # ===== Duration & visit tracking =====
     st.divider()
     st.subheader("⏱️ Duration & Visit Analysis")
-    st.write("Har banda kitni baar 'visit' kiya, aur kitni der screen pe raha (session-based calculation)")
+    st.write("How many times each person 'visited', and how long they were present (session-based calculation)")
 
-    SESSION_GAP_MINUTES = 2
+    SESSION_GAP_MINUTES = 2  # A gap larger than this counts as a new visit/session
 
     df_sorted = df.sort_values(["Name", "Detected At"]).copy()
     df_sorted["Time Gap"] = df_sorted.groupby("Name")["Detected At"].diff().dt.total_seconds()
@@ -160,12 +160,12 @@ else:
 
     st.dataframe(summary[["Person", "Total Visits", "Total Duration (min)"]], use_container_width=True)
 
-    # ===== Video Upload Section =====
+    # ===== Video upload section =====
     st.divider()
     st.subheader("🎥 Video Upload & Processing")
-    st.write("Koi bhi video file upload karo, system usme se logo ko detect aur pehchanega")
+    st.write("Upload any video file and the system will detect and identify people in it")
 
-    uploaded_file = st.file_uploader("Video choose karo", type=["mp4", "avi", "mov"])
+    uploaded_file = st.file_uploader("Choose a video", type=["mp4", "avi", "mov"])
 
     if uploaded_file is not None:
         temp_input_path = "temp_input_video.mp4"
@@ -173,11 +173,11 @@ else:
             f.write(uploaded_file.read())
 
         if st.button("🚀 Process Video"):
-            with st.spinner("Video process ho rahi hai... thoda time lagega"):
+            with st.spinner("Processing video... this may take a moment"):
                 from video_processor import process_video
                 output_path, frame_count = process_video(temp_input_path)
 
-            st.success(f"Video process ho gayi! Total {frame_count} frames process hue.")
+            st.success(f"Video processed! {frame_count} frames analyzed.")
 
             with open(output_path, "rb") as f:
                 video_bytes = f.read()

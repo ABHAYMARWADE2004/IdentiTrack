@@ -1,12 +1,12 @@
 # video_processor.py
-# Ye file kisi bhi uploaded video file ko process karti hai
-# YOLO se person detect, face_recognition se pehchaan, aur result video save karti hai
+# Processes an uploaded video file through the same detection pipeline
+# used in tracker.py, and writes a browser-playable output video.
 
 import cv2
 import face_recognition
 import pickle
 import time
-import imageio                     # Browser-friendly video likhne ke liye
+import imageio
 from ultralytics import YOLO
 from database import save_detection
 
@@ -19,19 +19,17 @@ def load_known_faces():
 
 def process_video(input_path, output_path="output_video.mp4"):
     """
-    Ek video file ko process karta hai:
-    - Har frame me person detect (YOLO) aur face pehchaan (face_recognition) karta hai
-    - Result ko ek nayi (browser-playable) video file me save karta hai
-    - Database me bhi log karta hai
+    Processes a video file frame-by-frame:
+    - Detects people (YOLO) and identifies faces (face_recognition)
+    - Writes an annotated output video (browser-compatible via H.264)
+    - Logs recognized detections to the database
     """
     known_encodings, known_names = load_known_faces()
     yolo_model = YOLO("yolov8n.pt")
 
     video_capture = cv2.VideoCapture(input_path)
-
     fps = video_capture.get(cv2.CAP_PROP_FPS) or 20
 
-    # imageio writer banao - H.264 codec use karta hai, ye browsers me chalta hai
     writer = imageio.get_writer(output_path, fps=fps, codec="libx264", quality=7)
 
     last_saved_time = {}
@@ -82,7 +80,6 @@ def process_video(input_path, output_path="output_video.mp4"):
             cv2.rectangle(frame, (x1, y2 - 30), (x2, y2), box_color, cv2.FILLED)
             cv2.putText(frame, name, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255, 255, 255), 1)
 
-        # imageio ko RGB chahiye, OpenCV frames BGR me hote hain - isliye convert karo
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         writer.append_data(rgb_frame)
 
