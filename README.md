@@ -8,9 +8,18 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red.svg)](https://streamlit.io/)
 [![MySQL](https://img.shields.io/badge/MySQL-Database-orange.svg)](https://www.mysql.com/)
 
-IdentiTrack Is an End-To-End Computer Vision System That Enrolls Individuals From Reference Photos And Automatically Detects And Identifies Them in Real Time — Via Live Webcam Or Uploaded Video — While Logging Every Detection To a Database And Surfacing Insights Through An Interactive Analytics Dashboard.
+I Built IdentiTrack to really understand how a computer vision system works — not just 
+detecting people in a video, but turning that into something actually useful: knowing who 
+showed up, when, and for how long.
 
-Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data Analytics — Combining A Two-stage AI Detection Pipeline With a Full Data Logging And Visualization Layer.
+You show it a few photos of someone once. After that, it Recognizes them — on a live 
+webcam or in an uploaded video — using two steps: first YOLOv8 checks if a person is there 
+at all (even if their face isn't visible), then Face Recognition figures out who it is. 
+Every match gets saved to MySQL, and a Streamlit dashboard turns that data into something 
+you can actually read — peak hours, how often someone showed up, trends over time.
+
+Building this meant thinking like two people at once: an engineer trying to get the 
+detection right, and an analyst trying to Make the data Actually mean something.
 
 ---
 
@@ -25,16 +34,14 @@ Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data A
 
 ## 🚀 Features
 
-| Feature | Description |
-|---|---|
-| 👤 **Face Enrollment** | Register Individuals From Reference Photos Organized By Name |
-| 🎯 **Two-Stage Detection** | YOLOv8 Detects *presence*, face Recognition Confirms *identity* |
-| 📹 **Live Webcam Tracking** | Real-time Detection And recognition with on-screen Bounding Boxes |
-| 🎬 **Video File Processing** | Upload any Video And Run The Full Detection Pipeline On It |
-| 🗄️ **Database Logging** | Every Detection Logged To MySQL With Cooldown-Based Deduplication |
-| 📊 **Analytics Dashboard** | Peak-Hour Trends, Per-person counts, Date-Wise Activity, CSV Export |
-| 🔍 **Filtering** | Filter Detection Records By Person And By Date |
-| 🔒 **Secure Config** | Credentials Managed Via `.env`, Excluded From Version Control |
+- 👤 **Face enrollment** — add someone by just dropping a few of their photos in a folder
+- 🎯 **Two-stage detection** — YOLOv8 checks if a person is there at all, then face recognition figures out who it is
+- 📹 **Live webcam tracking** — runs in real time, draws boxes and names right on screen
+- 🎬 **Works on video files too** — not just live webcam, you can upload a video and it'll process the whole thing
+- 🗄️ **Logs to MySQL** — with a cooldown so it's not spamming the same detection every frame
+- 📊 **Dashboard with real analytics** — peak hours, who showed up when, daily trends, and you can export it all as CSV
+- 🔍 **Filter by person or date** — easy to dig into specific records
+- 🔒 **Keeps credentials safe** — DB password lives in a .env file, never in the code
 
 ---
 
@@ -55,34 +62,36 @@ Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data A
 
 ## 🧠 How It Works
 
-┌──────────────┐ ┌──────────────────┐ ┌────────────────────┐
-│ Gallery │ --> │ Enrollment │ --> │ Face Encodings │
-│ Photos │ │ (enrollment.py) │ │ (encodings.pkl) │
-└──────────────┘ └──────────────────┘ └────────────────────┘
-│
-┌──────────────┐ ┌──────────────────┐ │
-│ Webcam / │ --> │ YOLOv8 Person │ <─────────────┘
-│ Video File │ │ Detection │
-└──────────────┘ └──────────────────┘
-│
-▼
-┌──────────────────┐
-│ Face Match │
-│ Against Encodings│
-└──────────────────┘
-│
-▼
-┌──────────────────┐ ┌────────────────────┐
-│ MySQL Logging │ --> │ Streamlit │
-│ (with cooldown) │ │ Analytics Dashboard│
-└──────────────────┘ └────────────────────┘
+```mermaid
+flowchart TD
+    A[Gallery Photos] --> B[enrollment.py]
+    B --> C[Face Encodings saved]
+    
+    D[Webcam / Video] --> E[YOLOv8: Is a person here?]
+    E --> F[Face found in that region?]
+    F --> C
+    F --> G[Match found?]
+    G --> H[Save to MySQL + cooldown]
+    H --> I[Streamlit Dashboard]
+```
 
+Basically, Here's what happens step by step:
 
-1. **Enrollment**: Reference Photos in `gallery/<PersonName>/` Are Converted Into 128-Dimension Facial Embeddings Via `enrollment.py` And Stored In `encodings.pkl`.
-2. **Detection**: Each Frame (from webcam or video) is Passed Through YOLOv8, Which Locates Every Person Present — Regardless Of Whether Their Face Is Visible.
-3. **Recognition**: The Cropped Region For Each Detected Person Is Checked For a Face; If Found, It's Matched Against Stored Encodings Using Distance-Based Comparison.
-4. **Logging**: Matched Detections Are Inserted Into MySQL, With Cooldown Logic Preventing Duplicate Entries For a Continuously Visible Person.
-5. **Visualization**: The Streamlit Dashboard Reads Live From The Database To Surface Detection Counts, Peak Activity Hours, Trends And Exportable Records.
+1. You drop a few photos of someone into `gallery/<PersonName>/`, and `enrollment.py` 
+   converts each face into a set of 128 numbers (a kind of fingerprint) saved in `encodings.pkl`.
+
+2. When the Webcam or a video runs, every Single frame goes through YOLOv8 first — it just 
+   checks "is there a person here?", whether or not their face is visible.
+
+3. If a Person is found, the system looks for a face inside that Region. If there's one, 
+   it compares it against all the saved fingerprints to figure out who it is.
+
+4. Whenever it finds a match, it saves that to MySQL — but with a cooldown, so it's not 
+   logging the same person every single frame while they're just standing there.
+
+5. The Dashboard then reads all this data back and turns it into something useful — 
+   detection counts, busiest hours, trends over time and so on.
+
 
 
 ## 📁 Project Structure
@@ -140,13 +149,11 @@ python tracker.py
 streamlit run dashboard.py
 ```
 
----
-
 ## 📊 Future Scope
 
 There's a lot of Advanced stuff I intentionally didn't build into this version — things like 
-handling cases where two people cross paths and the system has to figure out who's who, which 
-is honestly a whole research area on its own. For this project, I focused on getting a complete, 
+handling cases where Two people cross paths and the system has to figure out who's who, which 
+is honestly a whole research Area on its own. For this project, I focused on getting a complete, 
 understandable pipeline working end-to-end rather than a half-built complex one. A few things 
 I'd like to add going forward:
 
