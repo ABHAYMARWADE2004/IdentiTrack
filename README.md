@@ -85,27 +85,20 @@ Built As a Hands-On Deep Dive Into Computer Vision, Real-Time Systems And Data A
 5. **Visualization**: The Streamlit Dashboard Reads Live From The Database To Surface Detection Counts, Peak Activity Hours, Trends And Exportable Records.
 
 
----
-
 ## 📁 Project Structure
 
 ```
 IdentiTrack/
-├── gallery/                  # Reference photos for enrollment, organized by person name
-│   └── PersonName/
-│       ├── photo1.jpg
-│       └── photo2.jpg
-├── config.py                 # Central configuration (loads secrets from .env)
-├── enrollment.py              # Extracts face encodings from gallery photos
-├── tracker.py                  # Real-time webcam-based detection and recognition
-├── video_processor.py           # Processes uploaded video files
-├── database.py                   # MySQL connection, logging, and record management
-├── dashboard.py                   # Streamlit dashboard — analytics, filters, video upload
-├── requirements.txt                # Python dependencies
+├── gallery/                  # photos of people to enroll, one folder per person
+├── config.py                 # all the settings in one place (DB creds come from .env)
+├── enrollment.py              # reads gallery photos, saves face encodings
+├── tracker.py                  # live webcam tracking - the main detection loop
+├── video_processor.py           # same detection logic, but for uploaded videos
+├── database.py                   # all the MySQL stuff - save, fetch, clear
+├── dashboard.py                   # the Streamlit app - charts, filters, everything
+├── requirements.txt                # pip install -r this and you're set
 └── README.md
 ```
-
----
 
 ## ⚙️ Getting Started
 
@@ -151,13 +144,17 @@ streamlit run dashboard.py
 
 ## 📊 Future Scope
 
-- Multi-Camera Support For Simultaneous Feeds.
-- Real-Time Alerting for Specific Individuals.
-- Docker-Based Deployment For Production Environments.
-- Segmentation-Based Detection For Improved Accuracy In Crowded Scenes.
-- Scheduled Automated Reporting (Daily/Weekly summaries).
+There's a lot of Advanced stuff I intentionally didn't build into this version — things like 
+handling cases where two people cross paths and the system has to figure out who's who, which 
+is honestly a whole research area on its own. For this project, I focused on getting a complete, 
+understandable pipeline working end-to-end rather than a half-built complex one. A few things 
+I'd like to add going forward:
 
----
+- Support for multiple camera feeds running at once
+- Real-time alerts when a specific person is detected
+- Docker-based deployment for a more production-ready setup
+- Better handling of crowded scenes using segmentation-based detection
+- Automated daily/weekly summary reports
 
 ## 👨‍💻 Author
 
