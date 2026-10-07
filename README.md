@@ -12,9 +12,9 @@ I Built IdentiTrack to really understand how a computer vision system works — 
 detecting people in a video, but turning that into something actually useful: knowing who 
 showed up, when, and for how long.
 
-You show it a few photos of someone once. After that, it Recognizes them — on a live 
+You show it a few photos of Someone once. After that, it Recognizes them — on a live 
 webcam or in an uploaded video — using two steps: first YOLOv8 checks if a person is there 
-at all (even if their face isn't visible), then Face Recognition figures out who it is. 
+at all (even if their face isn't visible) Then Face Recognition figures out who it is. 
 Every match gets saved to MySQL, and a Streamlit dashboard turns that data into something 
 you can actually read — peak hours, how often someone showed up, trends over time.
 
@@ -39,7 +39,7 @@ detection right, and an analyst trying to Make the data Actually mean something.
 - 📹 **Live webcam tracking** — runs in real time, draws boxes and names right on screen
 - 🎬 **Works on video files too** — not just live webcam, you can upload a video and it'll process the whole thing
 - 🗄️ **Logs to MySQL** — with a cooldown so it's not spamming the same detection every frame
-- 📊 **Dashboard with real analytics** — peak hours, who showed up when, daily trends, and you can export it all as CSV
+- 📊 **Dashboard with real analytics** — peak hours, who showed up when, Daily trends and you can export it all as CSV
 - 🔍 **Filter by person or date** — easy to dig into specific records
 - 🔒 **Keeps credentials safe** — DB password lives in a .env file, never in the code
 
@@ -151,10 +151,10 @@ streamlit run dashboard.py
 
 ## 📊 Future Scope
 
-There's a lot of Advanced stuff I intentionally didn't build into this version — things like 
+There's a lot of Advanced stuff I Intentionally didn't build into this version — things like 
 handling cases where Two people cross paths and the system has to figure out who's who, which 
 is honestly a whole research Area on its own. For this project, I focused on getting a complete, 
-understandable pipeline working end-to-end rather than a half-built complex one. A few things 
+understandable Pipeline Working End-to-End rather than a half-built complex one. A few things 
 I'd like to add going forward:
 
 - Support for multiple camera feeds running at once
