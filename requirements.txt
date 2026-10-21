@@ -1,6 +1,12 @@
 opencv-python
 ultralytics
 dlib-bin
-face_recognition
+face-recognition-models
+click
+setuptools<81
 mysql-connector-python
 streamlit
+pandas
+python-dotenv
+imageio
+imageio-ffmpeg

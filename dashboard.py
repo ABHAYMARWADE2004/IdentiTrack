@@ -46,7 +46,7 @@ with st.sidebar:
 records = get_all_detections()
 
 if len(records) == 0:
-    st.warning("No detection records yet. Run tracker.py first.")
+    st.warning("No detection records yet. Run tracker.py, or upload a video below.")
 else:
     df = pd.DataFrame(records, columns=["Name", "Detected At"])
     df["Detected At"] = pd.to_datetime(df["Detected At"])
@@ -160,33 +160,33 @@ else:
 
     st.dataframe(summary[["Person", "Total Visits", "Total Duration (min)"]], use_container_width=True)
 
-    # ===== Video upload section =====
-    st.divider()
-    st.subheader("🎥 Video Upload & Processing")
-    st.write("Upload any video file and the system will detect and identify people in it")
+# ===== Video upload section =====
+st.divider()
+st.subheader("🎥 Video Upload & Processing")
+st.write("Upload any video file and the system will detect and identify people in it")
 
-    uploaded_file = st.file_uploader("Choose a video", type=["mp4", "avi", "mov"])
+uploaded_file = st.file_uploader("Choose a video", type=["mp4", "avi", "mov"])
 
-    if uploaded_file is not None:
-        temp_input_path = "temp_input_video.mp4"
-        with open(temp_input_path, "wb") as f:
-            f.write(uploaded_file.read())
+if uploaded_file is not None:
+    temp_input_path = "temp_input_video.mp4"
+    with open(temp_input_path, "wb") as f:
+        f.write(uploaded_file.read())
 
-        if st.button("🚀 Process Video"):
-            with st.spinner("Processing video... this may take a moment"):
-                from video_processor import process_video
-                output_path, frame_count = process_video(temp_input_path)
+    if st.button("🚀 Process Video"):
+        with st.spinner("Processing video... this may take a moment"):
+            from video_processor import process_video
+            output_path, frame_count = process_video(temp_input_path)
 
-            st.success(f"Video processed! {frame_count} frames analyzed.")
+        st.success(f"Video processed! {frame_count} frames analyzed.")
 
-            with open(output_path, "rb") as f:
-                video_bytes = f.read()
+        with open(output_path, "rb") as f:
+            video_bytes = f.read()
 
-            st.video(video_bytes)
+        st.video(video_bytes)
 
-            st.download_button(
-                label="📥 Download Processed Video",
-                data=video_bytes,
-                file_name="identitrack_processed.mp4",
-                mime="video/mp4"
-            )
+        st.download_button(
+            label="📥 Download Processed Video",
+            data=video_bytes,
+            file_name="identitrack_processed.mp4",
+            mime="video/mp4"
+        )
