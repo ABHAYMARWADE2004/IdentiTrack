@@ -2,8 +2,14 @@ venv/
 .env
 __pycache__/
 *.pyc
+.pytest_cache/
+
+# Models, generated files and personal data - never commit biometric photos
 encodings.pkl
 yolov8n.pt
 output_video.mp4
 temp_input_video.mp4
+*.mp4
 gallery/
+eval/
+eval_results.csv

@@ -1,222 +1,174 @@
 # 🎯 IdentiTrack
 
-A person detection and recognition system built using **YOLOv8**, **Face Recognition**, **MySQL**, and **Streamlit**.
+Person detection and face recognition with an analytics layer: **YOLOv8** finds people,
+**dlib face recognition** identifies enrolled faces, every sighting is logged to **MySQL**,
+and a **Streamlit** dashboard turns the log into visit, dwell-time and peak-hour analytics.
+
+> Built to learn how a computer-vision model becomes a complete system: capture → recognise →
+> store → analyse → evaluate.
 
 ---
 
-## About The Project
-
-I built IdentiTrack to understand how a complete computer vision system works in practice.
-
-Most projects stop after detecting or recognizing a person. I wanted to go a step further and build a system that could identify people, store detection records in a database, and show useful insights through a dashboard.
-
-With IdentiTrack, a person can be enrolled using a few photos. Once enrolled, the system can recognize them from a live webcam feed or a recorded video. Every detection is stored in MySQL, and the dashboard helps visualize patterns such as activity trends, peak hours, and detection history.
-
-This project helped me combine **Computer Vision**, **Database Management**, and **Data Analytics** into a single workflow.
-
----
-
-## 🚀 What It Can Do
-
-- Detect people using **YOLOv8**
-- Recognize enrolled faces
-- Work with live webcam feeds
-- Process recorded video files
-- Store detection records in **MySQL**
-- Avoid duplicate logging using **cooldown logic**
-- View analytics in a **Streamlit dashboard**
-- Filter records by person or date
-- Export data as **CSV**
-
----
-
-## 🛠️ Tech Stack
-
-- Python 3.10
-- YOLOv8
-- OpenCV
-- `face_recognition` (dlib)
-- MySQL
-- Streamlit
-- Pandas
-- `python-dotenv`
-
----
-
-## ⚙️ How It Works
-
-### Step 1: Enroll Faces
-
-Add a few images inside:
+## How it works
 
 ```text
-gallery/PersonName/
+ webcam / video file
+        │
+        ▼
+  YOLOv8 (person boxes)  ──►  face search in the head region of each box
+                                   │
+                                   ▼
+                       128-d face encoding ──► nearest enrolled face
+                                   │              (distance ≤ tolerance ?)
+                       ┌───────────┴───────────┐
+                    known                   unknown / no face
+                       │                  (drawn, never stored)
+                       ▼
+        cooldown gate (one log per person per 15 s)
+                       │
+                       ▼
+                 MySQL `detections`
+                       │
+                       ▼
+     Streamlit dashboard: analytics · visits & dwell time · records · video upload
 ```
 
-Run:
+## Features
 
-```bash
-python enrollment.py
-```
+- Real-time recognition from a webcam (`tracker.py`) or recorded video (`video_processor.py`)
+- One shared pipeline (`recognizer.py`) used by the tracker, video processor and dashboard
+- **Cooldown logging** so a person standing in view isn't logged every frame
+- **Video-time timestamps**: uploaded videos are logged by their position in the video, so
+  analytics stay correct however fast the file is processed
+- Frame skipping and head-region search to keep the live feed responsive; live FPS shown on screen
+- Pooled MySQL connections, bulk inserts for video, and automatic schema upgrade
+- Dashboard: filters (source, camera/video, person, date), daily trend, hour-of-day chart,
+  weekday × hour heatmap, visit timeline, per-person visit and dwell-time summary, CSV export
+- **`evaluate.py`**: measures recognition accuracy and false-accept rate on your own photos and
+  recommends a match tolerance (see *Evaluation*)
+- Unit and smoke tests (`pytest`)
 
-The system extracts facial features and stores them as encodings.
-
-### Step 2: Detect People
-
-When a webcam feed or video is processed, YOLOv8 looks for people in every frame.
-
-### Step 3: Recognize Faces
-
-If a face is visible, the system compares it with enrolled faces and identifies the person.
-
-### Step 4: Save Records
-
-Each successful detection is stored in MySQL.
-
-A cooldown mechanism prevents the same person from being logged repeatedly.
-
-### Step 5: Analyze Data
-
-The Streamlit dashboard reads data from the database and shows:
-
-- Detection history
-- Peak activity hours
-- Person-wise statistics
-- Daily trends
-- Exportable reports
-
----
-
-## 📁 Project Structure
-
-```text
-IdentiTrack/
-│
-├── gallery/
-├── config.py
-├── database.py
-├── enrollment.py
-├── tracker.py
-├── video_processor.py
-├── dashboard.py
-├── requirements.txt
-└── README.md
-```
-
----
-
-## 🔧 Setup
-
-**Clone the repository:**
+## Setup
 
 ```bash
 git clone https://github.com/ABHAYMARWADE2004/IdentiTrack.git
 cd IdentiTrack
-```
-
-**Create a virtual environment:**
-
-```bash
 python -m venv venv
-```
-
-**Activate it:**
-
-```bash
-venv\Scripts\activate
-```
-
-**Install dependencies:**
-
-```bash
+venv\Scripts\activate            # macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
 pip install face_recognition --no-deps
 ```
 
-**Create a `.env` file:**
-
-```env
-DB_PASSWORD=your_mysql_password
-```
-
-**Create the database:**
-
-```sql
-CREATE DATABASE identitrack_db;
-
-USE identitrack_db;
-
-CREATE TABLE detections (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    person_name VARCHAR(100),
-    detected_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-**Add a few clear photos of a person** (create the `gallery` folder first, the photos are not in the repo):
-
-```text
-gallery/PersonName/
-```
-
-**Generate face encodings:**
+Copy `.env.example` to `.env` and set your MySQL password. Then create the database/table
+(either `schema.sql`, or):
 
 ```bash
+python database.py
+```
+
+## Usage
+
+```bash
+# 1. Enrol people: put 5+ clear, varied, single-person photos in gallery/<PersonName>/
 python enrollment.py
-```
 
-**Start live tracking:**
+# 2a. Live camera (press q to quit)
+python tracker.py --camera 0 --name Entrance
 
-```bash
-python tracker.py
-```
+# 2b. ...or process a recording
+python video_processor.py clip.mp4 --start "2026-11-19 09:00:00"
 
-**Launch dashboard:**
-
-```bash
+# 3. Dashboard (also lets you upload and process videos)
 streamlit run dashboard.py
 ```
 
+## Evaluation
+
+A recognition system is only as good as its measured error rates, so the project includes a
+script that measures them from photos:
+
+```bash
+python evaluate.py --unknown-dir eval/strangers --max-far 0.01
+```
+
+- **Leave-one-out on the gallery** – each photo is matched against all *other* enrolled photos
+  → accuracy, false-reject rate, misidentification rate.
+- **Strangers** (`--unknown-dir`, photos of people who are *not* enrolled) → **false-accept
+  rate**, i.e. how often a stranger is given an enrolled person's name.
+- Sweeps tolerances 0.40–0.65 and recommends the most accurate one that keeps the
+  false-accept rate under your cap. Results are saved to `eval_results.csv`.
+
+### My results
+
+> Run `evaluate.py` on your own photos and record the numbers here (with N).
+
+| Tolerance | Test photos (N) | Accuracy | False-reject | Strangers (N) | False-accept |
+|---:|---:|---:|---:|---:|---:|
+| _fill in_ | | | | | |
+
+## Design decisions
+
+| Decision | Why |
+|---|---|
+| Match tolerance 0.5 (library default is 0.6) | 0.6 is lenient and raises false matches; the value is configurable and chosen with `evaluate.py` |
+| Timestamp video rows with `frame / fps` | Using processing time compresses a long video into seconds and ruins dwell/peak analytics |
+| Search only the top 60 % of tall person boxes | The face is in the head area; faster and fewer false faces on clothing |
+| Largest face per person box | Avoids matching background faces |
+| Skip enrollment photos with several faces | Can't know which face belongs to the person |
+| Unknown faces are drawn but never stored | Avoids accumulating biometric-adjacent data about unenrolled people |
+| Visit duration = (last − first) + one cooldown window | Logs are ≥15 s apart, so a single sighting would otherwise have zero duration |
+
+## Limitations
+
+- Face recognition needs a reasonably frontal, well-lit face; people turned away are detected
+  but shown as "Person" (not identified). Not a replacement for true person re-identification
+  across cameras.
+- Dwell time is an **estimate** from sampled logs, not a measurement.
+- Accuracy depends heavily on gallery quality and lighting; report your own measured numbers.
+- CPU-only dlib is slow on large frames; throughput is shown live and in the video summary.
+
+## Privacy and ethics
+
+Face data is biometric. Only enrol people who have given consent, keep `gallery/` and
+`encodings.pkl` out of version control (they are git-ignored), and don't deploy this to track
+people without a legal basis and clear notice. This project is for learning and demonstration.
+
+## Project structure
+
+```text
+IdentiTrack/
+├── config.py            # all settings (secrets via .env)
+├── recognizer.py        # shared YOLO + face-recognition pipeline
+├── tracker.py           # live webcam tracking
+├── video_processor.py   # recorded-video processing
+├── enrollment.py        # build face encodings from gallery/
+├── evaluate.py          # accuracy / false-accept evaluation + tolerance recommendation
+├── database.py          # pooled MySQL access, schema init/upgrade
+├── analytics.py         # sessionization and aggregates (pure pandas)
+├── dashboard.py         # Streamlit app
+├── utils.py             # cooldown gate, fps helper
+├── schema.sql
+├── tests/               # pytest: analytics, cooldown, evaluation, video pipeline, dashboard
+└── requirements.txt
+```
+
+## Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+The video-pipeline test uses lightweight stand-ins for YOLO and dlib, so it runs anywhere
+without a GPU, camera or database.
+
+## Roadmap
+
+- Multi-camera support and cross-camera person re-identification
+- Email/webhook alerts, Docker deployment, cloud hosting
+- Optional face-embedding index for large galleries
+
 ---
 
-## 📚 What I Learned
-
-Working on this project helped me gain hands-on experience with:
-
-- Computer Vision
-- Face Recognition
-- YOLOv8
-- Database Integration
-- Data Analytics
-- Real-Time Video Processing
-- Streamlit Dashboard Development
-
-More importantly, it taught me how different technologies can work together to build a complete solution instead of just an isolated model.
-
----
-
-## 🔮 Future Improvements
-
-Some improvements I would like to add in the future:
-
-- Multiple camera support
-- Email alerts for detections
-- Docker deployment
-- Cloud hosting
-- Better tracking in crowded scenes
-- Automated reports
-
----
-
-## 👨‍💻 Author
-
-**Abhay Marwade**
-
-Aspiring Data Analyst | Data Science & AI Enthusiast
-
-- **GitHub:** https://github.com/ABHAYMARWADE2004
-- **LinkedIn:** https://www.linkedin.com/in/abhay-marwade-681108295
-
----
-
-**⭐ If you found this project interesting, feel free to give it a star.**
+**Author:** Abhay Marwade · [GitHub](https://github.com/ABHAYMARWADE2004) ·
+[LinkedIn](https://www.linkedin.com/in/abhay-marwade-681108295)
